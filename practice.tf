@@ -5,7 +5,7 @@ terraform {
       version = "5.4.0"
     }
   }
-    backend "s3" {
+  backend "s3" {
     bucket = "terraform-backend-ashu-pr"
     key    = "practice.tf"
     region = "ap-south-1"
@@ -20,7 +20,7 @@ provider "aws" {
 
 resource "aws_instance" "Mumbai_instance" {
   ami                         = "ami-057752b3f1d6c4d6c"
-  instance_type               = "t2.micro"
+  instance_type               = var.mumbai_instance_type
   subnet_id                   = aws_subnet.Mumbai_01a.id
   key_name                    = aws_key_pair.Mumbai_keypair.key_name
   associate_public_ip_address = "true"
@@ -225,9 +225,9 @@ resource "aws_lb" "mumbai_LB" {
 resource "aws_launch_template" "mumbai_LT" {
   name = "MumbaiLT"
 
-#   iam_instance_profile {
-#     name = "test"
-#   }
+  #   iam_instance_profile {
+  #     name = "test"
+  #   }
 
   image_id = "ami-0183cfdb895e0ff29"
 
@@ -239,9 +239,9 @@ resource "aws_launch_template" "mumbai_LT" {
     enabled = true
   }
 
-#   network_interfaces {
-#     associate_public_ip_address = true
-#   }
+  #   network_interfaces {
+  #     associate_public_ip_address = true
+  #   }
 
   placement {
     availability_zone = "ap-south-1a"
@@ -264,11 +264,11 @@ resource "aws_launch_template" "mumbai_LT" {
 
 resource "aws_autoscaling_group" "Mumbai_ASG" {
   vpc_zone_identifier = [aws_subnet.Mumbai_01a.id, aws_subnet.Mumbai_01b.id]
-#   availability_zones  = ["ap-south-1a", "ap-south-1b"]
-  desired_capacity    = 2
-  max_size            = 3
-  min_size            = 1
-  target_group_arns   = [aws_lb_target_group.mumbai-TG-1.arn]
+  #   availability_zones  = ["ap-south-1a", "ap-south-1b"]
+  desired_capacity  = 2
+  max_size          = 3
+  min_size          = 1
+  target_group_arns = [aws_lb_target_group.mumbai-TG-1.arn]
   launch_template {
     id      = aws_launch_template.mumbai_LT.id
     version = "$Latest"
@@ -276,32 +276,32 @@ resource "aws_autoscaling_group" "Mumbai_ASG" {
 }
 
 
-resource "aws_lb_target_group" "mumbai-TG-1"{
-    name = "Mumbai-TG-1"
-    port = 80
-    protocol = "HTTP"
-    vpc_id = aws_vpc.mumbai_vpc.id
+resource "aws_lb_target_group" "mumbai-TG-1" {
+  name     = "Mumbai-TG-1"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.mumbai_vpc.id
 }
 
 resource "aws_lb_listener" "Mumbai-listener-1" {
-    load_balancer_arn = aws_lb.Mumbai-LB-1.arn
-    port = 80
-    protocol = "HTTP"
+  load_balancer_arn = aws_lb.Mumbai-LB-1.arn
+  port              = 80
+  protocol          = "HTTP"
 
-    default_action {
-      type = "forward"
-      target_group_arn = aws_lb_target_group.mumbai-TG-1.arn
-    }
-  
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.mumbai-TG-1.arn
+  }
+
 }
 
 resource "aws_lb" "Mumbai-LB-1" {
-    name = "Mumbai-LB-1"
-    internal = false
-    load_balancer_type = "application"
-    security_groups    = [aws_security_group.mumbai_sg.id]
-    subnets            = [aws_subnet.Mumbai_01a.id, aws_subnet.Mumbai_01b.id]
-    tags = {
-        Environment = "Production"
-    } 
+  name               = "Mumbai-LB-1"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.mumbai_sg.id]
+  subnets            = [aws_subnet.Mumbai_01a.id, aws_subnet.Mumbai_01b.id]
+  tags = {
+    Environment = "Production"
+  }
 }
